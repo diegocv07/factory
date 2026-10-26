@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://bcs8mlhead6y8"]
+
+[ext_resource type="PackedScene" uid="uid://g1rlk2f0gnxg" path="res://scenes/tile_placement.tscn" id="1_yqjtg"]
+[ext_resource type="Script" uid="uid://b2f25tsij3uqh" path="res://scenes/camera_controller.gd" id="2_lnu2h"]
+[ext_resource type="PackedScene" uid="uid://cwbpkl5svn1fb" path="res://scenes/building_manager.tscn" id="3_lnu2h"]
+
+[node name="Game" type="Node2D" unique_id=484294181]
+
+[node name="TilePlacement" parent="." unique_id=668171513 instance=ExtResource("1_yqjtg")]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=844805190]
+script = ExtResource("2_lnu2h")
+
+[node name="BuildingManager" parent="." unique_id=2013991985 instance=ExtResource("3_lnu2h")]
