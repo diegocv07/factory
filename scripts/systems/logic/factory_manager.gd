@@ -139,7 +139,7 @@ func add_belt(tile_index: int, direction: int, speed: int) -> int:
 	if direction < 0 or direction >= BeltNetwork.Direction.size():
 		return EMPTY
 	if speed < 0 or speed > 255:
-		push_error("Invalid belt speed")
+		#push_error("Invalid belt speed")
 		return EMPTY
 	# The placement controller registers the global building after this call.
 	if is_tile_occupied(tile_index):
