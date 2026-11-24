@@ -76,6 +76,9 @@ func getSnappedPosition(global_pos: Vector2) -> Vector2i:
 	
 	return tile_pos
 
+func flattenTileIndex(tile_pos: Vector2) -> int:
+	return tile_pos.y * GameFactoryManager.MAP_WIDTH + tile_pos.x
+	
 func _physics_process(_delta):
 	if select_mode:
 		selected_tile = Vector2i(0, 0)
@@ -88,14 +91,30 @@ func _physics_process(_delta):
 
 # updates BuildingManager tile data and places a tile the ground layer
 func placeTile(tile_pos: Vector2i):
+	if (tile_pos.x < 0 or tile_pos.y < 0):
+		print("INVALID TILE POS")
+		return
 	ground.set_cell(tile_pos, source_id, selected_tile, getDirectedConveyor(object_direction))
 	preview.erase_cell(tile_pos)
 	BuildingManager.getTiles(ground, selected_tile, tile_pos)
+	
+	# TODO TODO TODO this is TEMPORARY (Belt addition)
+	var belt_id = GameFactoryManager.add_belt(flattenTileIndex(tile_pos), object_direction, 1)
+	#GameFactoryManager.belt_store.put_item(belt_id, 0, 1, 0)
+	#GameFactoryManager.belt_store.change_item_count(belt_id, 1)
+	#print("item id = " + str(GameFactoryManager.belt_store.item_types[GameFactoryManager.belt_store.get_item_index(belt_id, 0)]));
 
 # updates BuildingManager tile data and removes a tile the ground layer
 func removeTile(tile_pos: Vector2i):
+	if (tile_pos.x < 0 or tile_pos.y < 0):
+		print("INVALID TILE POS")
+		return
 	BuildingManager.eraseTile(ground, tile_pos)
 	ground.erase_cell(tile_pos)
+	
+	# TODO TODO TODO this is TEMPORARY (Belt removal)
+	var belt_id = GameFactoryManager.belt_network.belt_at[flattenTileIndex(tile_pos)]
+	GameFactoryManager.remove_belt(belt_id)
 	
 func _input(event) -> void:
 	if Input.is_action_pressed("rotate_placement_clockwise"):

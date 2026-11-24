@@ -128,6 +128,7 @@ func _reset_belt_data(belt_id: int) -> void:
 
 
 func add_belt(tile_index: int, direction: int, speed: int) -> int:
+	print(direction)
 	if not initialized:
 		return EMPTY
 	if tile_index < 0 or tile_index >= world.size:

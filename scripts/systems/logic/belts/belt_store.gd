@@ -53,7 +53,12 @@ func reset() -> void:
 
 	occupied.clear()
 
-
+func get_item_positions() -> PackedFloat32Array:
+	return item_positions
+	
+func get_item_types() -> PackedInt32Array:
+	return item_types
+	
 # Clear every field and item slot for one belt ID, including its occupied flag.
 func clear_belt(belt_id: int) -> void:
 	grid_indices[belt_id] = EMPTY
@@ -93,6 +98,7 @@ func find_free_slot(belt_id: int, position: float) -> int:
 func put_item(belt_id: int, slot: int, resource_id: int, position: float) -> void:
 	var index: int = get_item_index(belt_id, slot)
 	item_types[index] = resource_id
+	print("put item " + str(resource_id) + " at index " + str(index))
 	item_positions[index] = position
 
 
@@ -107,7 +113,7 @@ func take_item(belt_id: int, slot: int) -> void:
 func change_item_count(belt_id: int, change: int) -> void:
 	var old_count: int = item_counts[belt_id]
 	var new_count: int = old_count + change
-	assert(new_count >= 0 and new_count <= MAX_ITEMS_PER_BELT)
+	assert(new_count >= 0 and new_count <= MAX_ITEMS_PER_BELT, "new count invalid = " + str(new_count))
 	item_counts[belt_id] = new_count
 
 	if old_count == 0 and new_count > 0:

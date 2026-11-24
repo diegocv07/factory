@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 BuildingManager="*uid://b28d4psynikjm"
+GameFactoryManager="*uid://dqremj44s4uon"
 
 [display]
 
