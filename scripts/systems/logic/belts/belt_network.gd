@@ -1,20 +1,20 @@
-## Holds the Topology of the belt graph: which belt occupies which tile, and which belt
-## each belt outputs into. It reads position and direction from BeltStore
 class_name BeltNetwork
 extends RefCounted
+# Topology of the belt graph: which belt occupies which tile, and which belt
+# each belt outputs into. It reads position and direction from BeltStore
 
 enum Direction {
-	UP,
-	RIGHT,
-	DOWN,
 	LEFT,
+	RIGHT,
+	UP,
+	DOWN,
 }
 
 const DIRECTION_OFFSETS: Array[Vector2i] = [
-	Vector2i.UP,
-	Vector2i.RIGHT,
-	Vector2i.DOWN,
 	Vector2i.LEFT,
+	Vector2i.RIGHT,
+	Vector2i.UP,
+	Vector2i.DOWN,
 ]
 
 const EMPTY: int = BeltStore.EMPTY
@@ -23,6 +23,8 @@ var world: FactoryWorld
 
 # Tile index -> belt ID.
 var belt_at: PackedInt32Array
+# belt ID -> Tile index <= This is needed for rendering purposes
+var tile_at: PackedInt32Array
 # Belt ID -> downstream belt ID, or EMPTY when nothing can receive items.
 var next_indices: PackedInt32Array
 
@@ -38,6 +40,8 @@ func _init(factory_world: FactoryWorld, store: BeltStore) -> void:
 func reset() -> void:
 	belt_at.resize(world.size)
 	belt_at.fill(EMPTY)
+	tile_at.resize(world.size)
+	tile_at.fill(EMPTY)
 	next_indices.resize(_store.capacity)
 	next_indices.fill(EMPTY)
 
@@ -50,12 +54,14 @@ func clear_belt(belt_id: int) -> void:
 # Claim [param tile_index] for [param belt_id]. The caller owns validation.
 func register(belt_id: int, tile_index: int) -> void:
 	belt_at[tile_index] = belt_id
+	tile_at[belt_id] = tile_index
 
 
 # Drop the tile claim and the output connection of one belt.
 func unregister(belt_id: int, tile_index: int) -> void:
 	if tile_index >= 0 and tile_index < belt_at.size() and belt_at[tile_index] == belt_id:
 		belt_at[tile_index] = EMPTY
+		tile_at[belt_id] = EMPTY
 	clear_belt(belt_id)
 
 

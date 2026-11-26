@@ -64,11 +64,13 @@ func reset() -> void:
 # Clear every field and item slot for one belt ID, including its occupied flag.
 ## Clears every variable for the given belt id
 func clear_belt(belt_id: int) -> void:
+	
 	grid_indices[belt_id] = EMPTY
 	directions[belt_id] = 0
 	speeds[belt_id] = 0
 	for slot in range(MAX_ITEMS_PER_BELT):
 		var index: int = get_item_index(belt_id, slot)
+		ItemRenderer.delete_item_render(item_ids[index])
 		item_types[index] = EMPTY
 		item_positions[index] = 0.0
 		item_ids[index] = EMPTY

@@ -4,6 +4,8 @@ extends Node2D
 @onready var ground: TileMapLayer = $Ground
 @onready var preview: TileMapLayer = $Preview
 
+@export var sprite_texture: Texture2D
+
 enum Direction {LEFT, RIGHT, UP, DOWN}
 enum MouseDirection {CLOCKWISE = 1, COUNTERCLOCKWISE = 0}
 enum ConveyorStyle {DEFAULT, SIDE_INPUT, }
@@ -19,6 +21,7 @@ enum ConveyorDirection {
 }
 #tileset source id
 var source_id : int
+#tileset tile selected
 var selected_tile : Vector2i
 #tracks snapped mouse position when mouse 1 is pressed
 var m_pos_before : Vector2i
@@ -46,6 +49,7 @@ var preview_tile: Vector2i:
 		preview.erase_cell(preview_tile)
 		preview_tile = value
 		preview.set_cell(value, source_id, selected_tile, getDirectedConveyor(object_direction))
+			
 		#TODO!!! make conveyors unique here
 		var atlas_tile : TileSetAtlasSource
 		atlas_tile = preview.tile_set.get_source(source_id)
@@ -53,6 +57,9 @@ var preview_tile: Vector2i:
 		if atlas_tile:
 			tile_size = atlas_tile.get_tile_size_in_atlas(selected_tile)
 		placeable = true
+		if (!posInBounds(preview_tile)):
+			placeable = false
+			return
 		
 		for j in range(tile_size.y):
 			for i in range(tile_size.x):
@@ -68,7 +75,10 @@ func _ready() -> void:
 ## Called every frame. 'delta' is the elapsed time since the previous frame.
 #func _process(delta: float) -> void:
 	#pass
- 
+
+func posInBounds(pos: Vector2i) -> bool:
+	return pos.x >= 0 and pos.y >= 0 and pos.x < GameFactoryManager.MAP_WIDTH and pos.y < GameFactoryManager.MAP_HEIGHT 
+
 # returns a position relative to the tiles in the tile map
 func getSnappedPosition(global_pos: Vector2) -> Vector2i:
 	var local_pos = ground.to_local(global_pos)
@@ -76,11 +86,16 @@ func getSnappedPosition(global_pos: Vector2) -> Vector2i:
 	
 	return tile_pos
 
+func flattenTileIndex(tile_pos: Vector2) -> int:
+	return int(tile_pos.y) * GameFactoryManager.MAP_WIDTH + int(tile_pos.x)
+	
 func _physics_process(_delta):
 	if select_mode:
 		selected_tile = Vector2i(0, 0)
 		preview_tile = getSnappedPosition(get_global_mouse_position())
 		
+		
+			
 		if draggable and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			drawPlaceObjectPreview(m_pos_before, preview_tile)
 		elif draggable and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
@@ -91,20 +106,36 @@ func placeTile(tile_pos: Vector2i):
 	ground.set_cell(tile_pos, source_id, selected_tile, getDirectedConveyor(object_direction))
 	preview.erase_cell(tile_pos)
 	BuildingManager.getTiles(ground, selected_tile, tile_pos)
+	
+	# TODO TODO TODO this is TEMPORARY (Belt addition)
+	GameFactoryManager.add_belt(flattenTileIndex(tile_pos), object_direction, 1)
+	#GameFactoryManager.belt_store.put_item(belt_id, 0, 1, 0)
+	#GameFactoryManager.belt_store.change_item_count(belt_id, 1)
+	#print("item id = " + str(GameFactoryManager.belt_store.item_types[GameFactoryManager.belt_store.get_item_index(belt_id, 0)]));
 
 # updates BuildingManager tile data and removes a tile the ground layer
 func removeTile(tile_pos: Vector2i):
 	BuildingManager.eraseTile(ground, tile_pos)
 	ground.erase_cell(tile_pos)
 	
+	# TODO TODO TODO this is TEMPORARY (Belt removal)
+	var belt_id = GameFactoryManager.belt_network.belt_at[flattenTileIndex(tile_pos)]
+	GameFactoryManager.remove_belt(belt_id)
+
+#TODO remove
+var belt_id_test = 0
+
 func _input(event) -> void:
 	if Input.is_action_pressed("rotate_placement_clockwise"):
 		rotatePlacement(MouseDirection.CLOCKWISE)
+		return
 	elif Input.is_action_pressed("rotate_placement_counterclockwise"):
 		rotatePlacement(MouseDirection.COUNTERCLOCKWISE)
+		return
 		
 	if event is InputEventMouseButton:
 		handlePlacement(event)
+		return
 				
 			
 	if event is InputEventKey:
@@ -117,9 +148,19 @@ func _input(event) -> void:
 			draggable = true
 			select_mode = true
 			source_id = 0
+			return
 			#TODO PLACEHOLDER BELOW FOR OTHER OBJECTS
 		if event.keycode == KEY_2 and event.pressed:
 			pass
+			
+	if Input.is_action_pressed("test_input"):
+		#TODO REMOVE LATER TEST PURPOSES
+		if (!GameFactoryManager.active_belts.contains(belt_id_test)):
+			return
+		if GameFactoryManager.belt_store.item_count(belt_id_test) >= GameFactoryManager.belt_store.MAX_ITEMS_PER_BELT - 1:
+			return
+		GameFactoryManager.try_insert_belt_item(belt_id_test, 1)
+		#print("item id = " + str(GameFactoryManager.belt_store.item_types[GameFactoryManager.belt_store.get_item_index(belt_id_test, 0)]));
 
 #TODO THIS IS TEMPORARY!!!!!
 #returns the alternate conveyor tile corresponding to the tile set tiles
@@ -140,7 +181,10 @@ func drawPlaceObjectPreview(first_pos, second_pos):
 		object_direction = getDragDirection(first_pos, second_pos)
 	selected_tile = Vector2i(0, 0)
 	preview.clear()
-	preview.modulate = Color("ffffff6f")
+	if (!posInBounds(first_pos) or !posInBounds(second_pos)):
+		preview.modulate = Color.RED
+	else:
+		preview.modulate = Color("ffffff6f")
 	var draw_logic = func draw_logic(cell):
 		preview.set_cell(cell, source_id, selected_tile, getDirectedConveyor(object_direction))
 	editTilesOrthogonally(first_pos, second_pos, draw_logic)
@@ -196,8 +240,13 @@ func handlePlacement(event):
 		m_pos_before = getSnappedPosition(get_global_mouse_position())
 	else:
 		m_pos_after = getSnappedPosition(get_global_mouse_position())
-			
+	
 	if event.button_index == MOUSE_BUTTON_LEFT and select_mode and !event.pressed and (placeable or draggable):
+		if (!posInBounds(m_pos_before) or !posInBounds(m_pos_after)):
+			print("INVALID TILE POS")
+			preview.clear()
+			return
+			
 		if not draggable or m_pos_before == m_pos_after:
 			selected_tile = Vector2i(0, 0)
 			placeTile(m_pos_after)
@@ -213,6 +262,7 @@ func handlePlacement(event):
 
 #calls editTilesOrthogonally with a placement function
 func placeDraggedObjects(first_pos, second_pos):
+		
 	selected_tile = Vector2i(0, 0)
 	var place_function = func place_function(cell):
 		placeTile(cell)

@@ -192,6 +192,9 @@ func try_insert_belt_item(belt_id: int, resource_id: int) -> bool:
 
 	belt_store.put_item(belt_id, slot, resource_id, 0.0, item_id)
 	belt_store.change_item_count(belt_id, 1)
+	
+	ItemRenderer.create_item_render(item_id, ItemRenderer.tileIndexToVector(belt_store.grid_indices[belt_id]))
+	
 	return true
 
 
@@ -208,6 +211,9 @@ func try_take_belt_item(belt_id: int, resource_id: int) -> bool:
 			continue
 		var item_id: int = belt_store.item_ids[index]
 		belt_store.take_item(belt_id, slot)
+		
+		ItemRenderer.delete_item_render(item_id)
+		
 		belt_item_id_pool.release(item_id)
 		belt_store.change_item_count(belt_id, -1)
 		return true
