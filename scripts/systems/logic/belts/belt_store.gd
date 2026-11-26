@@ -25,8 +25,11 @@ var item_counts: PackedByteArray
 # Item data, indexed by get_item_index(belt_id, slot).
 var item_types: PackedInt32Array
 var item_positions: PackedFloat32Array
+var item_ids: PackedInt32Array
+var _ordered_slots: Array[int] = []
 
-# Belts with at least one item. Maintained by change_item_count().
+## Belts with at least one item. Maintained by change_item_count().
+## the simulator only needs to update the belts that are occupied
 var occupied: DenseIdSet
 
 
@@ -36,6 +39,7 @@ func _init(belt_capacity: int) -> void:
 	reset()
 
 
+## Resets all the fields of the class
 func reset() -> void:
 	grid_indices.resize(capacity)
 	grid_indices.fill(EMPTY)
@@ -51,10 +55,14 @@ func reset() -> void:
 	item_positions.resize(capacity * MAX_ITEMS_PER_BELT)
 	item_positions.fill(0.0)
 
+	item_ids.resize(item_types.size())
+	item_ids.fill(EMPTY)
+
 	occupied.clear()
 
 
 # Clear every field and item slot for one belt ID, including its occupied flag.
+## Clears every variable for the given belt id
 func clear_belt(belt_id: int) -> void:
 	grid_indices[belt_id] = EMPTY
 	directions[belt_id] = 0
@@ -63,11 +71,13 @@ func clear_belt(belt_id: int) -> void:
 		var index: int = get_item_index(belt_id, slot)
 		item_types[index] = EMPTY
 		item_positions[index] = 0.0
+		item_ids[index] = EMPTY
 	item_counts[belt_id] = 0
 	occupied.remove(belt_id)
 
 
 # Flatten a belt ID and one of its item slots into an array index.
+## gets the item index for the given belt and slot on the belt
 func get_item_index(belt_id: int, slot: int) -> int:
 	return belt_id * MAX_ITEMS_PER_BELT + slot
 
@@ -76,6 +86,8 @@ func get_item_index(belt_id: int, slot: int) -> int:
 
 # A slot is usable when it is empty and no existing item on the same belt sits
 # closer than MIN_ITEM_SPACING to [param position].
+## tries to find a free slot for the given belt,
+## returns -1 if not found
 func find_free_slot(belt_id: int, position: float) -> int:
 	var empty_slot: int = EMPTY
 	for slot in range(MAX_ITEMS_PER_BELT):
@@ -89,21 +101,23 @@ func find_free_slot(belt_id: int, position: float) -> int:
 	return empty_slot
 
 
-# Write an item into a slot. Does not touch the item count.
-func put_item(belt_id: int, slot: int, resource_id: int, position: float) -> void:
+## Write an item into a slot. Does not touch the item count.
+func put_item(belt_id: int, slot: int, resource_id: int, position: float, item_id: int) -> void:
 	var index: int = get_item_index(belt_id, slot)
 	item_types[index] = resource_id
 	item_positions[index] = position
+	item_ids[index] = item_id
 
 
-# Clear one item slot. Does not touch the item count.
+## Clear one item slot. Does not touch the item count.
 func take_item(belt_id: int, slot: int) -> void:
 	var index: int = get_item_index(belt_id, slot)
 	item_types[index] = EMPTY
 	item_positions[index] = 0.0
+	item_ids[index] = EMPTY
 
 
-# Move a belt between the empty and occupied sets when its count crosses zero.
+## Move a belt between the empty and occupied sets when its count crosses zero.
 func change_item_count(belt_id: int, change: int) -> void:
 	var old_count: int = item_counts[belt_id]
 	var new_count: int = old_count + change
@@ -116,5 +130,23 @@ func change_item_count(belt_id: int, change: int) -> void:
 		occupied.remove(belt_id)
 
 
+## gets the amount of Items of given belt
 func item_count(belt_id: int) -> int:
 	return item_counts[belt_id]
+
+
+func get_ordered_slots(belt_id: int) -> Array[int]:
+	_ordered_slots.clear()
+
+	for slot in range(MAX_ITEMS_PER_BELT):
+		var index: int = get_item_index(belt_id, slot)
+		if item_types[index] != EMPTY:
+			_ordered_slots.append(slot)
+
+	_ordered_slots.sort_custom(
+		func(a: int, b: int) -> bool:
+			return item_positions[get_item_index(belt_id, a)] > \
+					item_positions[get_item_index(belt_id, b)],
+	)
+
+	return _ordered_slots
