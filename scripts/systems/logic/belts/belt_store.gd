@@ -25,6 +25,8 @@ var item_counts: PackedByteArray
 # Item data, indexed by get_item_index(belt_id, slot).
 var item_types: PackedInt32Array
 var item_positions: PackedFloat32Array
+var item_ids: PackedInt32Array
+var _ordered_slots: Array[int] = []
 
 ## Belts with at least one item. Maintained by change_item_count().
 ## the simulator only needs to update the belts that are occupied
@@ -53,6 +55,9 @@ func reset() -> void:
 	item_positions.resize(capacity * MAX_ITEMS_PER_BELT)
 	item_positions.fill(0.0)
 
+	item_ids.resize(item_types.size())
+	item_ids.fill(EMPTY)
+
 	occupied.clear()
 
 
@@ -66,6 +71,7 @@ func clear_belt(belt_id: int) -> void:
 		var index: int = get_item_index(belt_id, slot)
 		item_types[index] = EMPTY
 		item_positions[index] = 0.0
+		item_ids[index] = EMPTY
 	item_counts[belt_id] = 0
 	occupied.remove(belt_id)
 
@@ -96,10 +102,11 @@ func find_free_slot(belt_id: int, position: float) -> int:
 
 
 ## Write an item into a slot. Does not touch the item count.
-func put_item(belt_id: int, slot: int, resource_id: int, position: float) -> void:
+func put_item(belt_id: int, slot: int, resource_id: int, position: float, item_id: int) -> void:
 	var index: int = get_item_index(belt_id, slot)
 	item_types[index] = resource_id
 	item_positions[index] = position
+	item_ids[index] = item_id
 
 
 ## Clear one item slot. Does not touch the item count.
@@ -107,6 +114,7 @@ func take_item(belt_id: int, slot: int) -> void:
 	var index: int = get_item_index(belt_id, slot)
 	item_types[index] = EMPTY
 	item_positions[index] = 0.0
+	item_ids[index] = EMPTY
 
 
 ## Move a belt between the empty and occupied sets when its count crosses zero.
@@ -125,3 +133,20 @@ func change_item_count(belt_id: int, change: int) -> void:
 ## gets the amount of Items of given belt
 func item_count(belt_id: int) -> int:
 	return item_counts[belt_id]
+
+
+func get_ordered_slots(belt_id: int) -> Array[int]:
+	_ordered_slots.clear()
+
+	for slot in range(MAX_ITEMS_PER_BELT):
+		var index: int = get_item_index(belt_id, slot)
+		if item_types[index] != EMPTY:
+			_ordered_slots.append(slot)
+
+	_ordered_slots.sort_custom(
+		func(a: int, b: int) -> bool:
+			return item_positions[get_item_index(belt_id, a)] > \
+					item_positions[get_item_index(belt_id, b)],
+	)
+
+	return _ordered_slots
