@@ -139,6 +139,7 @@ func _reset_belt_data(belt_id: int) -> void:
 ## and updates the connections to the neighbouring belts
 ## If it succeeds, it returns the id assigned, otherwise it returns -1
 func add_belt(tile_index: int, direction: int, speed: int) -> int:
+	print(direction)
 	if not initialized:
 		return EMPTY
 	if tile_index < 0 or tile_index >= world.size:

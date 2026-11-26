@@ -19,7 +19,11 @@ config/icon="res://icon.svg"
 
 GameFactoryManager="*uid://dqremj44s4uon"
 BuildingManager="*uid://b28d4psynikjm"
+<<<<<<< HEAD
 ItemRenderer="*uid://xltst38f10fp"
+=======
+GameFactoryManager="*uid://dqremj44s4uon"
+>>>>>>> 7de2fb455304de17bfca2f65f0188546c33d7352
 
 [display]
 

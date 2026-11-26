@@ -24,7 +24,11 @@ var world: FactoryWorld
 # Tile index -> belt ID.
 var belt_at: PackedInt32Array
 # belt ID -> Tile index <= This is needed for rendering purposes
+<<<<<<< HEAD
 var tile_at: PackedInt32Array
+=======
+var tile_from_belt_id: PackedInt32Array
+>>>>>>> 7de2fb455304de17bfca2f65f0188546c33d7352
 # Belt ID -> downstream belt ID, or EMPTY when nothing can receive items.
 var next_indices: PackedInt32Array
 
@@ -40,8 +44,13 @@ func _init(factory_world: FactoryWorld, store: BeltStore) -> void:
 func reset() -> void:
 	belt_at.resize(world.size)
 	belt_at.fill(EMPTY)
+<<<<<<< HEAD
 	tile_at.resize(world.size)
 	tile_at.fill(EMPTY)
+=======
+	tile_from_belt_id.resize(world.size)
+	tile_from_belt_id.fill(EMPTY)
+>>>>>>> 7de2fb455304de17bfca2f65f0188546c33d7352
 	next_indices.resize(_store.capacity)
 	next_indices.fill(EMPTY)
 
@@ -54,14 +63,22 @@ func clear_belt(belt_id: int) -> void:
 # Claim [param tile_index] for [param belt_id]. The caller owns validation.
 func register(belt_id: int, tile_index: int) -> void:
 	belt_at[tile_index] = belt_id
+<<<<<<< HEAD
 	tile_at[belt_id] = tile_index
+=======
+	tile_from_belt_id[belt_id] = tile_index
+>>>>>>> 7de2fb455304de17bfca2f65f0188546c33d7352
 
 
 # Drop the tile claim and the output connection of one belt.
 func unregister(belt_id: int, tile_index: int) -> void:
 	if tile_index >= 0 and tile_index < belt_at.size() and belt_at[tile_index] == belt_id:
 		belt_at[tile_index] = EMPTY
+<<<<<<< HEAD
 		tile_at[belt_id] = EMPTY
+=======
+		tile_from_belt_id[belt_id] = EMPTY
+>>>>>>> 7de2fb455304de17bfca2f65f0188546c33d7352
 	clear_belt(belt_id)
 
 
