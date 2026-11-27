@@ -9,6 +9,7 @@ extends DataDefinition
 
 @export_group("Visuals")
 @export var scene: PackedScene 
+@export var icon : Texture2D
 
 @export_group("Placement")
 @export var size: Vector2i = Vector2i.ONE
