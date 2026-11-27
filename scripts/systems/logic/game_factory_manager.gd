@@ -21,7 +21,8 @@ const MAX_MACHINES: int = 50000
 const MAX_MACHINE_SLOTS: int = MachineStore.MAX_MACHINE_SLOTS
 
 # Common
-var catalog = FactoryCatalog
+@export var catalog: FactoryCatalog
+@export var item_renderer: ItemRenderer
 var initialized: bool = false
 var world: FactoryWorld = null
 
@@ -169,6 +170,12 @@ func remove_belt(belt_id: int) -> void:
 	if not _is_active_belt(belt_id):
 		return
 
+	# clears the item sprites drawn on top of this belt
+	for idx in range(0, belt_store.MAX_ITEMS_PER_BELT):
+		var item_idx = belt_store.get_item_index(belt_id, idx)
+		var item_id = belt_store.item_ids[item_idx]
+		item_renderer.delete_item_render(item_id)
+		
 	var tile_index: int = belt_store.grid_indices[belt_id]
 	belt_network.unregister(belt_id, tile_index)
 	belt_store.clear_belt(belt_id)
@@ -194,7 +201,8 @@ func try_insert_belt_item(belt_id: int, resource_id: int) -> bool:
 	belt_store.put_item(belt_id, slot, resource_id, 0.0, item_id)
 	belt_store.change_item_count(belt_id, 1)
 	
-	ItemRenderer.create_item_render(item_id, ItemRenderer.tileIndexToVector(belt_store.grid_indices[belt_id]))
+	var resource_texture: AtlasTexture = catalog.resource_resources[resource_id].icon
+	item_renderer.create_item_render(item_id, item_renderer.tileIndexToVector(belt_store.grid_indices[belt_id]), resource_texture)
 	
 	return true
 
@@ -213,7 +221,7 @@ func try_take_belt_item(belt_id: int, resource_id: int) -> bool:
 		var item_id: int = belt_store.item_ids[index]
 		belt_store.take_item(belt_id, slot)
 		
-		ItemRenderer.delete_item_render(item_id)
+		item_renderer.delete_item_render(item_id)
 		
 		belt_item_id_pool.release(item_id)
 		belt_store.change_item_count(belt_id, -1)

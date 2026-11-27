@@ -75,7 +75,7 @@ func clear_belt(belt_id: int) -> void:
 	speeds[belt_id] = 0
 	for slot in range(MAX_ITEMS_PER_BELT):
 		var index: int = get_item_index(belt_id, slot)
-		ItemRenderer.delete_item_render(item_ids[index])
+		#11ItemRenderer.delete_item_render(item_ids[index])
 		item_types[index] = EMPTY
 		item_positions[index] = 0.0
 		item_ids[index] = EMPTY

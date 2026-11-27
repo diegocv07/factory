@@ -1,17 +1,3 @@
 [gd_scene format=3 uid="uid://nlh5lk6vjjim"]
 
-[ext_resource type="Script" uid="uid://xltst38f10fp" path="res://scenes/item_renderer.gd" id="1_axvgc"]
-<<<<<<< HEAD
-
-[node name="ItemRenderer" type="Node2D" unique_id=2022954031]
-z_index = 3
-texture_filter = 1
-script = ExtResource("1_axvgc")
-=======
-[ext_resource type="Texture2D" uid="uid://dhgo175feyalv" path="res://assets/Items.png" id="2_fqgpw"]
-
-[node name="ItemRenderer" type="Node2D" unique_id=2022954031]
-texture_filter = 1
-script = ExtResource("1_axvgc")
-sprite_sheet = ExtResource("2_fqgpw")
->>>>>>> 7de2fb455304de17bfca2f65f0188546c33d7352
+[node name="ItemRenderer" type="Node2D" unique_id=307064938]

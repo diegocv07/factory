@@ -4,7 +4,7 @@ extends Node2D
 @onready var ground: TileMapLayer = $Ground
 @onready var preview: TileMapLayer = $Preview
 
-@export var sprite_texture: Texture2D
+@export var factory_manager: FactoryManager
 
 enum Direction {LEFT, RIGHT, UP, DOWN}
 enum MouseDirection {CLOCKWISE = 1, COUNTERCLOCKWISE = 0}
@@ -77,7 +77,7 @@ func _ready() -> void:
 	#pass
 
 func posInBounds(pos: Vector2i) -> bool:
-	return pos.x >= 0 and pos.y >= 0 and pos.x < GameFactoryManager.MAP_WIDTH and pos.y < GameFactoryManager.MAP_HEIGHT 
+	return pos.x >= 0 and pos.y >= 0 and pos.x < factory_manager.MAP_WIDTH and pos.y < factory_manager.MAP_HEIGHT 
 
 # returns a position relative to the tiles in the tile map
 func getSnappedPosition(global_pos: Vector2) -> Vector2i:
@@ -87,7 +87,7 @@ func getSnappedPosition(global_pos: Vector2) -> Vector2i:
 	return tile_pos
 
 func flattenTileIndex(tile_pos: Vector2) -> int:
-	return int(tile_pos.y) * GameFactoryManager.MAP_WIDTH + int(tile_pos.x)
+	return int(tile_pos.y) * factory_manager.MAP_WIDTH + int(tile_pos.x)
 	
 func _physics_process(_delta):
 	if select_mode:
@@ -111,10 +111,10 @@ func placeTile(tile_pos: Vector2i):
 	BuildingManager.getTiles(ground, selected_tile, tile_pos)
 	
 	# TODO TODO TODO this is TEMPORARY (Belt addition)
-	GameFactoryManager.add_belt(flattenTileIndex(tile_pos), object_direction, 1)
-	#GameFactoryManager.belt_store.put_item(belt_id, 0, 1, 0)
-	#GameFactoryManager.belt_store.change_item_count(belt_id, 1)
-	#print("item id = " + str(GameFactoryManager.belt_store.item_types[GameFactoryManager.belt_store.get_item_index(belt_id, 0)]));
+	factory_manager.add_belt(flattenTileIndex(tile_pos), object_direction, 1)
+	#factory_manager.belt_store.put_item(belt_id, 0, 1, 0)
+	#factory_manager.belt_store.change_item_count(belt_id, 1)
+	#print("item id = " + str(factory_manager.belt_store.item_types[factory_manager.belt_store.get_item_index(belt_id, 0)]));
 
 # updates BuildingManager tile data and removes a tile the ground layer
 func removeTile(tile_pos: Vector2i):
@@ -125,8 +125,8 @@ func removeTile(tile_pos: Vector2i):
 	ground.erase_cell(tile_pos)
 	
 	# TODO TODO TODO this is TEMPORARY (Belt removal)
-	var belt_id = GameFactoryManager.belt_network.belt_at[flattenTileIndex(tile_pos)]
-	GameFactoryManager.remove_belt(belt_id)
+	var belt_id = factory_manager.belt_network.belt_at[flattenTileIndex(tile_pos)]
+	factory_manager.remove_belt(belt_id)
 
 #TODO remove
 var belt_id_test = 0
@@ -160,12 +160,12 @@ func _input(event) -> void:
 			
 	if Input.is_action_pressed("test_input"):
 		#TODO REMOVE LATER TEST PURPOSES
-		if (!GameFactoryManager.active_belts.contains(belt_id_test)):
+		if (!factory_manager.active_belts.contains(belt_id_test)):
 			return
-		if GameFactoryManager.belt_store.item_count(belt_id_test) >= GameFactoryManager.belt_store.MAX_ITEMS_PER_BELT - 1:
+		if factory_manager.belt_store.item_count(belt_id_test) >= factory_manager.belt_store.MAX_ITEMS_PER_BELT - 1:
 			return
-		GameFactoryManager.try_insert_belt_item(belt_id_test, 1)
-		#print("item id = " + str(GameFactoryManager.belt_store.item_types[GameFactoryManager.belt_store.get_item_index(belt_id_test, 0)]));
+		factory_manager.try_insert_belt_item(belt_id_test, randi_range(0, 2))
+		#print("item id = " + str(factory_manager.belt_store.item_types[factory_manager.belt_store.get_item_index(belt_id_test, 0)]));
 
 #TODO THIS IS TEMPORARY!!!!!
 #returns the alternate conveyor tile corresponding to the tile set tiles

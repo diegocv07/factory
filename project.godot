@@ -17,9 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-GameFactoryManager="*uid://dqremj44s4uon"
 BuildingManager="*uid://b28d4psynikjm"
-ItemRenderer="*uid://xltst38f10fp"
 
 [display]
 
