@@ -20,12 +20,10 @@ func _process(delta: float):
 	drag_pan()
 
 func zoomCamera(delta: float):
-	if Input.is_key_pressed(KEY_CTRL):
-		return
-	if Input.is_action_just_pressed("camera_zoom_in"):
+	if Input.is_action_just_pressed("camera_zoom_in", true):
 		zoom_target *= 1.1
 	
-	if Input.is_action_just_pressed("camera_zoom_out"):
+	if Input.is_action_just_pressed("camera_zoom_out", true):
 		zoom_target *= 0.9
 	
 	zoom = zoom.slerp(zoom_target, zoom_speed * delta)

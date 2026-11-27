@@ -17,6 +17,7 @@
 [ext_resource type="Resource" uid="uid://ds5dkqwwljfp7" path="res://data_definitions/machines/smelter.tres" id="13_1kice"]
 [ext_resource type="PackedScene" uid="uid://nlh5lk6vjjim" path="res://scenes/item_renderer.tscn" id="15_ca42v"]
 [ext_resource type="Script" uid="uid://xltst38f10fp" path="res://scenes/item_renderer.gd" id="16_rysoc"]
+[ext_resource type="PackedScene" uid="uid://d3qyq8k5sdyta" path="res://scenes/controls_group.tscn" id="18_ssvqc"]
 
 [node name="Game" type="Node2D" unique_id=484294181]
 
@@ -43,3 +44,7 @@ item_renderer = NodePath("../ItemRenderer")
 [node name="ItemRenderer" parent="." unique_id=307064938 node_paths=PackedStringArray("factory_manager") instance=ExtResource("15_ca42v")]
 script = ExtResource("16_rysoc")
 factory_manager = NodePath("../FactoryManager")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=397820346]
+
+[node name="ControlsGroup" parent="CanvasLayer" unique_id=1581434739 instance=ExtResource("18_ssvqc")]

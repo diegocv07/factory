@@ -131,10 +131,10 @@ func removeTile(tile_pos: Vector2i):
 #TODO remove
 var belt_id_test = 0
 func _input(event) -> void:
-	if Input.is_action_pressed("rotate_placement_clockwise"):
+	if Input.is_action_pressed("rotate_placement_clockwise", true):
 		rotatePlacement(MouseDirection.CLOCKWISE)
 		return
-	elif Input.is_action_pressed("rotate_placement_counterclockwise"):
+	elif Input.is_action_pressed("rotate_placement_counterclockwise", true):
 		rotatePlacement(MouseDirection.COUNTERCLOCKWISE)
 		return
 		
