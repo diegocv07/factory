@@ -112,7 +112,6 @@ func find_free_slot(belt_id: int, position: float) -> int:
 func put_item(belt_id: int, slot: int, resource_id: int, position: float, item_id: int) -> void:
 	var index: int = get_item_index(belt_id, slot)
 	item_types[index] = resource_id
-	print("put item " + str(resource_id) + " at index " + str(index))
 	item_positions[index] = position
 	item_ids[index] = item_id
 

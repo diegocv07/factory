@@ -164,7 +164,7 @@ func _input(event) -> void:
 			return
 		if factory_manager.belt_store.item_count(belt_id_test) >= factory_manager.belt_store.MAX_ITEMS_PER_BELT - 1:
 			return
-		factory_manager.try_insert_belt_item(belt_id_test, randi_range(0, 2))
+		factory_manager.try_insert_belt_item(belt_id_test, randi_range(0, 3))
 		#print("item id = " + str(factory_manager.belt_store.item_types[factory_manager.belt_store.get_item_index(belt_id_test, 0)]));
 
 #TODO THIS IS TEMPORARY!!!!!

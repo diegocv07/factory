@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://chb4d6bj1ky5g" path="res://scripts/definitions/items/resource_definition.gd" id="5_kvpfn"]
 [ext_resource type="Resource" uid="uid://b0d3mpbqs5i7o" path="res://data_definitions/resources/coal.tres" id="6_dinhu"]
 [ext_resource type="Resource" uid="uid://c7irvcys3rq1b" path="res://data_definitions/resources/iron.tres" id="7_kvuet"]
+[ext_resource type="Resource" uid="uid://dfyyr6igh6rr0" path="res://data_definitions/resources/copper.tres" id="8_rysoc"]
 [ext_resource type="Resource" uid="uid://4c1ms0hgv6ob" path="res://data_definitions/resources/steel.tres" id="8_trtic"]
 [ext_resource type="Script" uid="uid://cxyjuhk6qn8x5" path="res://scripts/definitions/recipes/recipe_definition.gd" id="9_ir15t"]
 [ext_resource type="Resource" uid="uid://b0agss8il421m" path="res://data_definitions/recipes/steel_recipe.tres" id="10_ca42v"]
@@ -29,7 +30,7 @@ script = ExtResource("2_lnu2h")
 
 [node name="FactoryCatalog" type="Node" parent="." unique_id=584227353]
 script = ExtResource("5_ca42v")
-resource_resources = Array[ExtResource("5_kvpfn")]([ExtResource("6_dinhu"), ExtResource("7_kvuet"), ExtResource("8_trtic")])
+resource_resources = Array[ExtResource("5_kvpfn")]([ExtResource("6_dinhu"), ExtResource("7_kvuet"), ExtResource("8_trtic"), ExtResource("8_rysoc")])
 belt_resources = Array[ExtResource("10_rysoc")]([ExtResource("11_ssvqc")])
 machine_resources = Array[ExtResource("12_264po")]([ExtResource("13_1kice")])
 recipe_resources = Array[ExtResource("9_ir15t")]([ExtResource("10_ca42v")])

@@ -22,17 +22,15 @@ func _ready() -> void:
 
 func create_item_render(item_id: int, pos: Vector2i, texture: AtlasTexture):
 	var new_sprite_instance = rs.canvas_item_create()
+	rs.canvas_item_set_draw_index(new_sprite_instance, item_id)
 	rs.canvas_item_set_default_texture_filter(new_sprite_instance, RenderingServer.CANVAS_ITEM_TEXTURE_FILTER_NEAREST)
 	rs.canvas_item_set_parent(new_sprite_instance, get_canvas_item())
-	
 	var trans = Transform2D(0, pos * TILE_SIZE)
 	rs.canvas_item_set_transform(new_sprite_instance, trans)
 	#rs.canvas_item_add_texture_rect(new_sprite_instance, Rect2(0, 0, TILE_SIZE, TILE_SIZE), texture)
 	rs.canvas_item_add_texture_rect_region(new_sprite_instance, Rect2(0, 0, TILE_SIZE, TILE_SIZE), texture, texture.region)
-	
 	_sprite_instances.get_or_add(item_id, new_sprite_instance)
-	print("create item render with id = " + str(item_id))
-	
+	#print("create item render with id = " + str(item_id))
 func delete_item_render(item_id: int):
 	var instance_id = _sprite_instances.get(item_id)
 	if instance_id == null:
