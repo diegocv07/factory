@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bcs8mlhead6y8"]
 
-[ext_resource type="PackedScene" uid="uid://g1rlk2f0gnxg" path="res://scenes/tile_placement.tscn" id="1_yqjtg"]
-[ext_resource type="Script" uid="uid://b2f25tsij3uqh" path="res://scenes/camera_controller.gd" id="2_lnu2h"]
+[ext_resource type="PackedScene" uid="uid://g1rlk2f0gnxg" path="res://scripts/rendering/tile_placement.tscn" id="1_yqjtg"]
+[ext_resource type="Script" uid="uid://b2f25tsij3uqh" path="res://scripts/rendering/camera_controller.gd" id="2_lnu2h"]
 [ext_resource type="Script" uid="uid://dqremj44s4uon" path="res://scripts/systems/logic/game_factory_manager.gd" id="4_ir15t"]
 [ext_resource type="Script" uid="uid://dlftengbgphhn" path="res://scripts/definitions/factory_catalog.gd" id="5_ca42v"]
 [ext_resource type="Script" uid="uid://chb4d6bj1ky5g" path="res://scripts/definitions/items/resource_definition.gd" id="5_kvpfn"]
@@ -15,9 +15,10 @@
 [ext_resource type="Resource" uid="uid://b801uavjhwjcv" path="res://data_definitions/belts/basic_belt.tres" id="11_ssvqc"]
 [ext_resource type="Script" uid="uid://bo7yrdfojrcih" path="res://scripts/definitions/buildings/machine_definition.gd" id="12_264po"]
 [ext_resource type="Resource" uid="uid://ds5dkqwwljfp7" path="res://data_definitions/machines/smelter.tres" id="13_1kice"]
-[ext_resource type="PackedScene" uid="uid://nlh5lk6vjjim" path="res://scenes/item_renderer.tscn" id="15_ca42v"]
-[ext_resource type="Script" uid="uid://xltst38f10fp" path="res://scenes/item_renderer.gd" id="16_rysoc"]
-[ext_resource type="PackedScene" uid="uid://d3qyq8k5sdyta" path="res://scenes/controls_group.tscn" id="18_ssvqc"]
+[ext_resource type="PackedScene" uid="uid://nlh5lk6vjjim" path="res://scripts/rendering/item_renderer.tscn" id="15_ca42v"]
+[ext_resource type="Script" uid="uid://xltst38f10fp" path="res://scripts/rendering/item_renderer.gd" id="16_rysoc"]
+[ext_resource type="PackedScene" uid="uid://d3qyq8k5sdyta" path="res://scripts/ui/keybind_remap.tscn" id="18_264po"]
+[ext_resource type="PackedScene" uid="uid://4iu0740ortog" path="res://scripts/ui/factory_building_ui.tscn" id="19_264po"]
 
 [node name="Game" type="Node2D" unique_id=484294181]
 
@@ -42,9 +43,10 @@ catalog = NodePath("../FactoryCatalog")
 item_renderer = NodePath("../ItemRenderer")
 
 [node name="ItemRenderer" parent="." unique_id=307064938 node_paths=PackedStringArray("factory_manager") instance=ExtResource("15_ca42v")]
+z_index = 2
 script = ExtResource("16_rysoc")
 factory_manager = NodePath("../FactoryManager")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=397820346]
+[node name="KeybindRemapUI" parent="." unique_id=2008140194 instance=ExtResource("18_264po")]
 
-[node name="ControlsGroup" parent="CanvasLayer" unique_id=1581434739 instance=ExtResource("18_ssvqc")]
+[node name="FactoryBuildingUI" parent="." unique_id=979463156 instance=ExtResource("19_264po")]

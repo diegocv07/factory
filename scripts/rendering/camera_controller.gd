@@ -1,7 +1,7 @@
 extends Camera2D
 
-@export var zoom_speed: float = 10
-@export var pan_speed: float = 1000
+@export var zoom_speed: float = 20
+@export var pan_speed: float = 1500
 
 var zoom_target: Vector2
 var drag_start_mouse_pos: Vector2

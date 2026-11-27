@@ -75,11 +75,26 @@ func initialize_factory() -> void:
 
 	initialized = true
 
+## Converts a flattened tile index into a Vector2i of its position
+static func tileIndexToVector(tile_idx: int) -> Vector2i:
+	return Vector2i(tile_idx % MAP_WIDTH, int(float(tile_idx) / MAP_WIDTH))
 
+## Converts position of a Vector2i into a flattened index
+static func flattenTileIndex(tile_pos: Vector2i) -> int:
+	return int(tile_pos.y) * MAP_WIDTH + int(tile_pos.x)
+
+## Returns true when tile index is within world bounds
+func is_index_in_bounds(tile_index: int) -> bool:
+		return tile_index >= 0 and tile_index < world.size
+
+## Returns true when vector position is within world bounds
+func is_pos_in_bounds(pos: Vector2i) -> bool:
+	return pos.x >= 0 and pos.y >= 0 and pos.x < world.width and pos.y < world.height 
+		
 ## True when the tile is out of bounds, already holds a belt or machine, or
 ## factory world class reports a building there. Belts and machines must not share a tile.
 func is_tile_occupied(tile_index: int) -> bool:
-	if tile_index < 0 or tile_index >= world.size:
+	if !is_index_in_bounds(tile_index):
 		return true
 	if belt_network != null and belt_network.belt_at[tile_index] != EMPTY:
 		return true
@@ -204,7 +219,7 @@ func try_insert_belt_item(belt_id: int, resource_id: int) -> bool:
 	
 	if item_renderer != null:
 		var resource_texture: AtlasTexture = catalog.resource_resources[resource_id].icon
-		item_renderer.create_item_render(item_id, item_renderer.tileIndexToVector(belt_store.grid_indices[belt_id]), resource_texture)
+		item_renderer.create_item_render(item_id, tileIndexToVector(belt_store.grid_indices[belt_id]), resource_texture)
 	
 	return true
 

@@ -8,6 +8,11 @@ const ROW_SIZE_MIN := 32
 const BUTTON_SIZE_MIN := 30
 const FONT_SIZE := 24
 
+#TODO This array is reserved for preventing rebinding actions that overlap with statically defined ones
+# such as placement handling (M1, M2)
+const RESERVED_KEYBINDS: PackedStringArray = ([
+	"placeholder"
+])
 # To make an action rebindable, just add it to the dictionary under an existing category or make a new one. 
 # The key is the name of the Input Map action (MAKE SURE IT MATCHES) and the value is what is displayed on the menu
 var actions: Dictionary =  {

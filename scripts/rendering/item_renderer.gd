@@ -2,7 +2,7 @@ class_name ItemRenderer
 extends Node2D
 
 
-@export var sprite_sheet: CompressedTexture2D = preload("res://assets/Items.png")
+@export var sprite_sheet: CompressedTexture2D = preload("res://assets/resource_spritesheet.png")
 @export var factory_manager: FactoryManager
 const TILE_SIZE: int = 64
 #var sprite_instance : RID
@@ -27,10 +27,11 @@ func create_item_render(item_id: int, pos: Vector2i, texture: AtlasTexture):
 	rs.canvas_item_set_parent(new_sprite_instance, get_canvas_item())
 	var trans = Transform2D(0, pos * TILE_SIZE)
 	rs.canvas_item_set_transform(new_sprite_instance, trans)
-	#rs.canvas_item_add_texture_rect(new_sprite_instance, Rect2(0, 0, TILE_SIZE, TILE_SIZE), texture)
+	#rs.canvas_item_add_texture_rect(new_sprite_instance, Rect2(0, 0, TILE_SIZE, TILE_SIZE), sprite_sheet)
 	rs.canvas_item_add_texture_rect_region(new_sprite_instance, Rect2(0, 0, TILE_SIZE, TILE_SIZE), texture, texture.region)
 	_sprite_instances.get_or_add(item_id, new_sprite_instance)
 	#print("create item render with id = " + str(item_id))
+	
 func delete_item_render(item_id: int):
 	var instance_id = _sprite_instances.get(item_id)
 	if instance_id == null:
@@ -39,16 +40,12 @@ func delete_item_render(item_id: int):
 	rs.free_rid(instance_id)
 	_sprite_instances.erase(item_id)
 	
-func tileIndexToVector(tile_idx: int) -> Vector2i:
-	@warning_ignore("integer_division")
-	return Vector2i(tile_idx % factory_manager.MAP_WIDTH, tile_idx / factory_manager.MAP_WIDTH)
-	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
 	#rs.canvas_item_clear(sprite_instance)
 	for belt_id in factory_manager.belt_store.occupied.ids:
 	
-		var belt_pos: Vector2i = tileIndexToVector(factory_manager.belt_store.grid_indices[belt_id])
+		var belt_pos: Vector2i = FactoryManager.tileIndexToVector(factory_manager.belt_store.grid_indices[belt_id])
 		var direction = factory_manager.belt_store.directions[belt_id]
 		
 		for item_slot in range(factory_manager.belt_store.MAX_ITEMS_PER_BELT):

@@ -57,14 +57,15 @@ var preview_tile: Vector2i:
 		if atlas_tile:
 			tile_size = atlas_tile.get_tile_size_in_atlas(selected_tile)
 		placeable = true
-		if (!posInBounds(preview_tile)):
+		if (!factory_manager.is_pos_in_bounds(preview_tile)):
 			placeable = false
 			return
 		
 		for j in range(tile_size.y):
 			for i in range(tile_size.x):
-				var tile = preview_tile + Vector2i(i, j)
-				if tile in BuildingManager.used_tiles:
+				var tile: Vector2i = preview_tile + Vector2i(i, j)
+				var tile_idx = FactoryManager.flattenTileIndex(tile)
+				if factory_manager.is_tile_occupied(tile_idx):
 					placeable = false
 
 # Called when the node enters the scene tree for the first time.
@@ -76,18 +77,12 @@ func _ready() -> void:
 #func _process(delta: float) -> void:
 	#pass
 
-func posInBounds(pos: Vector2i) -> bool:
-	return pos.x >= 0 and pos.y >= 0 and pos.x < factory_manager.MAP_WIDTH and pos.y < factory_manager.MAP_HEIGHT 
-
-# returns a position relative to the tiles in the tile map
+## returns position relative to the tiles in the tile map
 func getSnappedPosition(global_pos: Vector2) -> Vector2i:
 	var local_pos = ground.to_local(global_pos)
 	var tile_pos = ground.local_to_map(local_pos)
 	
 	return tile_pos
-
-func flattenTileIndex(tile_pos: Vector2) -> int:
-	return int(tile_pos.y) * factory_manager.MAP_WIDTH + int(tile_pos.x)
 	
 func _physics_process(_delta):
 	if select_mode:
@@ -101,35 +96,31 @@ func _physics_process(_delta):
 		elif draggable and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 			drawRemoveObjectPreview(m_pos_before, preview_tile)
 
-# updates BuildingManager tile data and places a tile the ground layer
+## places tile into the world and draws its sprite to the canvas
 func placeTile(tile_pos: Vector2i):
 	if (tile_pos.x < 0 or tile_pos.y < 0):
 		print("INVALID TILE POS")
 		return
 	ground.set_cell(tile_pos, source_id, selected_tile, getDirectedConveyor(object_direction))
 	preview.erase_cell(tile_pos)
-	BuildingManager.getTiles(ground, selected_tile, tile_pos)
 	
 	# TODO TODO TODO this is TEMPORARY (Belt addition)
-	factory_manager.add_belt(flattenTileIndex(tile_pos), object_direction, 1)
-	#factory_manager.belt_store.put_item(belt_id, 0, 1, 0)
-	#factory_manager.belt_store.change_item_count(belt_id, 1)
-	#print("item id = " + str(factory_manager.belt_store.item_types[factory_manager.belt_store.get_item_index(belt_id, 0)]));
-
-# updates BuildingManager tile data and removes a tile the ground layer
+	factory_manager.add_belt(FactoryManager.flattenTileIndex(tile_pos), object_direction, 1)
+	
+## removes tile from the world and derenders its sprite
 func removeTile(tile_pos: Vector2i):
 	if (tile_pos.x < 0 or tile_pos.y < 0):
 		print("INVALID TILE POS")
 		return
-	BuildingManager.eraseTile(ground, tile_pos)
 	ground.erase_cell(tile_pos)
 	
 	# TODO TODO TODO this is TEMPORARY (Belt removal)
-	var belt_id = factory_manager.belt_network.belt_at[flattenTileIndex(tile_pos)]
+	var belt_id = factory_manager.belt_network.belt_at[FactoryManager.flattenTileIndex(tile_pos)]
 	factory_manager.remove_belt(belt_id)
 
-#TODO remove
+#TODO for testing, remove later
 var belt_id_test = 0
+
 func _input(event) -> void:
 	if Input.is_action_pressed("rotate_placement_clockwise", true):
 		rotatePlacement(MouseDirection.CLOCKWISE)
@@ -141,7 +132,6 @@ func _input(event) -> void:
 	if event is InputEventMouseButton:
 		handlePlacement(event)
 		return
-				
 			
 	if event is InputEventKey:
 		if event.keycode == KEY_ESCAPE and event.pressed:
@@ -186,7 +176,7 @@ func drawPlaceObjectPreview(first_pos, second_pos):
 		object_direction = getDragDirection(first_pos, second_pos)
 	selected_tile = Vector2i(0, 0)
 	preview.clear()
-	if (!posInBounds(first_pos) or !posInBounds(second_pos)):
+	if (!factory_manager.is_pos_in_bounds(first_pos) or !factory_manager.is_pos_in_bounds(second_pos)):
 		preview.modulate = Color.RED
 	else:
 		preview.modulate = Color("ffffff6f")
@@ -247,7 +237,7 @@ func handlePlacement(event):
 		m_pos_after = getSnappedPosition(get_global_mouse_position())
 	
 	if event.button_index == MOUSE_BUTTON_LEFT and select_mode and !event.pressed and (placeable or draggable):
-		if (!posInBounds(m_pos_before) or !posInBounds(m_pos_after)):
+		if (!factory_manager.is_pos_in_bounds(m_pos_before) or !factory_manager.is_pos_in_bounds(m_pos_after)):
 			print("INVALID TILE POS")
 			preview.clear()
 			return
