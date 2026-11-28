@@ -8,11 +8,20 @@ const ROW_SIZE_MIN := 32
 const BUTTON_SIZE_MIN := 30
 const FONT_SIZE := 24
 
-#TODO This array is reserved for preventing rebinding actions that overlap with statically defined ones
+########################################################################################
+###################################### READ THIS #######################################
+########################################################################################
+# 1This array is reserved for preventing rebinding actions that overlap with statically defined ones
 # such as placement handling (M1, M2)
-const RESERVED_KEYBINDS: PackedStringArray = ([
-	"placeholder"
+const RESERVED_BINDS: Array = ([
+	"T",
+	"Right Mouse Button",
+	"Left Mouse Button"
 ])
+
+########################################################################################
+###################################### READ THIS #######################################
+########################################################################################
 # To make an action rebindable, just add it to the dictionary under an existing category or make a new one. 
 # The key is the name of the Input Map action (MAKE SURE IT MATCHES) and the value is what is displayed on the menu
 var actions: Dictionary =  {
@@ -27,19 +36,19 @@ var actions: Dictionary =  {
 	"Placement": {
 		"rotate_placement_clockwise": "Rotate Clockwise",
 		"rotate_placement_counterclockwise": "Rotate Counterclockwise",
-	}
-	#"Hotbar": {
-		#"hotbar_1": "Hotbar 1",
-		#"hotbar_2": "Hotbar 2",
-		#"hotbar_3": "Hotbar 3",
-		#"hotbar_4": "Hotbar 4",
-		#"hotbar_5": "Hotbar 5",
-		#"hotbar_6": "Hotbar 6",
-		#"hotbar_7": "Hotbar 7",
-		#"hotbar_8": "Hotbar 8",
-		#"hotbar_9": "Hotbar 9",
-		#"hotbar_0": "Hotbar 0",
-	#},
+	},
+	"Hotbar": {
+		"select_hotbar_slot_1": "Slot 1",
+		"select_hotbar_slot_2": "Slot 2",
+		"select_hotbar_slot_3": "Slot 3",
+		"select_hotbar_slot_4": "Slot 4",
+		"select_hotbar_slot_5": "Slot 5",
+		"select_hotbar_slot_6": "Slot 6",
+		"select_hotbar_slot_7": "Slot 7",
+		"select_hotbar_slot_8": "Slot 8",
+		"select_hotbar_slot_9": "Slot 9",
+		"select_hotbar_slot_0": "Slot 10",
+	},
 }
 
 @export var action_rows: VBoxContainer
@@ -583,6 +592,10 @@ func _load_bindings() -> void:
 					)
  
 func _apply_binding( new_event: InputEvent, input_type: String ) -> void:
+	if RESERVED_BINDS.has(new_event.as_text()):
+		description.text = "This input is reserved."
+		return
+		
 	if _has_conflict( listening_action, new_event, input_type ):
 		description.text = "This input is already assigned."
 		return
@@ -618,6 +631,7 @@ func _handle_modifier_release(event: InputEventKey) -> void:
  
 func _capture_keyboard(event: InputEvent) -> void:
 	if event is InputEventKey:
+			
 		if not event.pressed:
 			if _is_modifier_key(event.keycode):
 				_handle_modifier_release(event)
@@ -653,7 +667,7 @@ func _capture_keyboard(event: InputEvent) -> void:
 		key.ctrl_pressed = event.ctrl_pressed
 		key.alt_pressed = event.alt_pressed
 		key.meta_pressed = event.meta_pressed
- 
+				
 		_apply_binding(key, "keyboard")
 		active_modifiers.clear()
 		get_viewport().set_input_as_handled()

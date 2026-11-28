@@ -259,6 +259,7 @@ sources/0 = SubResource("TileSetAtlasSource_mjf3l")
 sources/1 = SubResource("TileSetAtlasSource_c8stx")
 
 [node name="TilePlacement" type="Node2D" unique_id=668171513]
+scale = Vector2(4, 4)
 script = ExtResource("1_mjf3l")
 
 [node name="Ground" type="TileMapLayer" parent="." unique_id=535397880]

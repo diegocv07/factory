@@ -1,14 +1,21 @@
 @tool
+class_name TilePlacement
 extends Node2D
 
+# TODO for testing, remove later
+var belt_id_test = 0
+
+# rendering layer for belts
 @onready var ground: TileMapLayer = $Ground
+# rendering layer for previewing placement
 @onready var preview: TileMapLayer = $Preview
 
 @export var factory_manager: FactoryManager
 
-enum Direction {LEFT, RIGHT, UP, DOWN}
+const Direction = factory_manager.Direction
 enum MouseDirection {CLOCKWISE = 1, COUNTERCLOCKWISE = 0}
-enum ConveyorStyle {DEFAULT, SIDE_INPUT, }
+
+# TODO not used properly as of now, intended for rendering correct belt connections
 enum ConveyorDirection {
 	LEFT = 0, 
 	RIGHT = 1,
@@ -19,16 +26,24 @@ enum ConveyorDirection {
 	DOWN_INPUT_RIGHT = 6,
 	DOWN_INPUT_LEFT = 7
 }
+
+#currently selected building to place in the world
+var selected_building : BuildingDefinition
+#placement direction
+var object_direction : Direction = Direction.RIGHT
+
 #tileset source id
 var source_id : int
 #tileset tile selected
 var selected_tile : Vector2i
+
 #tracks snapped mouse position when mouse 1 is pressed
-var m_pos_before : Vector2i
+var pressed_mouse_pos : Vector2i
 #tracks snapped mouse position when mouse 1 is released
-var m_pos_after : Vector2i
-var object_direction : Direction = Direction.RIGHT
+var released_mouse_pos : Vector2i
+#true if placement is enabled, false otherwise
 var select_mode : bool = false
+
 var placeable : bool:
 	set(value):
 		placeable = value
@@ -36,11 +51,19 @@ var placeable : bool:
 			preview.modulate = Color.RED
 		else:
 			preview.modulate = Color("ffffff6f")
+
 #for now, I think conveyor belts should overwrite themselves to easily change direction
 var draggable : bool = true
+var conveyor_held : bool = false
+
+#used for cases where M1 is still held while a "cancelling" action is pressed
+var deny_placement_action : bool = false
+
 #this variable pauses the auto belt direction when dragging until dragging again.
 #use case: using mousewheel to set belt direction before placing belts in desired direction
 var pause_direction_update : bool = false
+
+#draws the preview tile to the screen when placement is enabled
 var preview_tile: Vector2i:
 	set(value):
 		if preview_tile != value:
@@ -57,25 +80,36 @@ var preview_tile: Vector2i:
 		if atlas_tile:
 			tile_size = atlas_tile.get_tile_size_in_atlas(selected_tile)
 		placeable = true
+		
 		if (!factory_manager.is_pos_in_bounds(preview_tile)):
 			placeable = false
 			return
 		
 		for j in range(tile_size.y):
 			for i in range(tile_size.x):
-				var tile: Vector2i = preview_tile + Vector2i(i, j)
-				var tile_idx = FactoryManager.flattenTileIndex(tile)
+				var tile_idx = FactoryManager.flatten_tile_index(preview_tile + Vector2i(i, j))
 				if factory_manager.is_tile_occupied(tile_idx):
 					placeable = false
+					break
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	
+	# TODO Temporary: renders the map area
+	var rs = RenderingServer
+	var map_bound_render = rs.canvas_item_create()
+	var trans = Transform2D(0, Vector2.ZERO)
+	rs.canvas_item_set_transform(map_bound_render, trans)
+	rs.canvas_item_set_draw_index(map_bound_render, -5)
+	rs.canvas_item_set_default_texture_filter(map_bound_render, RenderingServer.CANVAS_ITEM_TEXTURE_FILTER_NEAREST)
+	rs.canvas_item_set_parent(map_bound_render, get_canvas_item())
+	rs.canvas_item_add_rect(map_bound_render, 
+							Rect2(0, 0, (FactoryManager.MAP_WIDTH * ItemRenderer.TILE_SIZE) / scale.x, 
+							(FactoryManager.MAP_HEIGHT  * ItemRenderer.TILE_SIZE) / scale.y), 
+							Color.hex(0x444444ff))
+							
 	source_id = 0
-	pass # Replace with function body.
 
-## Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta: float) -> void:
-	#pass
 
 ## returns position relative to the tiles in the tile map
 func getSnappedPosition(global_pos: Vector2) -> Vector2i:
@@ -85,42 +119,51 @@ func getSnappedPosition(global_pos: Vector2) -> Vector2i:
 	return tile_pos
 	
 func _physics_process(_delta):
-	if select_mode:
-		selected_tile = Vector2i(0, 0)
-		preview_tile = getSnappedPosition(get_global_mouse_position())
+	if !select_mode:
+		return
 		
-		
-			
-		if draggable and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-			drawPlaceObjectPreview(m_pos_before, preview_tile)
-		elif draggable and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
-			drawRemoveObjectPreview(m_pos_before, preview_tile)
+	selected_tile = Vector2i(0, 0)
+	preview_tile = getSnappedPosition(get_global_mouse_position())
+
+	if draggable and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and !deny_placement_action:
+		drawPlaceObjectPreview(pressed_mouse_pos, preview_tile)
+	elif draggable and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and !deny_placement_action:
+		drawRemoveObjectPreview(pressed_mouse_pos, preview_tile)
 
 ## places tile into the world and draws its sprite to the canvas
 func placeTile(tile_pos: Vector2i):
-	if (tile_pos.x < 0 or tile_pos.y < 0):
+	if (!factory_manager.is_pos_in_bounds(tile_pos)):
 		print("INVALID TILE POS")
 		return
+	
+	
+	if conveyor_held:
+		var belt: BeltDefinition = selected_building
+		var added = factory_manager.add_belt(FactoryManager.flatten_tile_index(tile_pos), object_direction, int(belt.items_per_second))
+		if added == -1:
+			print("called replace")
+			factory_manager.replace_existing_belt(factory_manager.belt_network.belt_at[FactoryManager.flatten_tile_index(tile_pos)], object_direction, int(belt.items_per_second))
+	else:
+		# TODO change later, only belts exist right now
+		return
+	
 	ground.set_cell(tile_pos, source_id, selected_tile, getDirectedConveyor(object_direction))
 	preview.erase_cell(tile_pos)
 	
-	# TODO TODO TODO this is TEMPORARY (Belt addition)
-	factory_manager.add_belt(FactoryManager.flattenTileIndex(tile_pos), object_direction, 1)
-	
 ## removes tile from the world and derenders its sprite
 func removeTile(tile_pos: Vector2i):
-	if (tile_pos.x < 0 or tile_pos.y < 0):
+	if (!factory_manager.is_pos_in_bounds(tile_pos)):
 		print("INVALID TILE POS")
 		return
 	ground.erase_cell(tile_pos)
 	
-	# TODO TODO TODO this is TEMPORARY (Belt removal)
-	var belt_id = factory_manager.belt_network.belt_at[FactoryManager.flattenTileIndex(tile_pos)]
-	factory_manager.remove_belt(belt_id)
-
-#TODO for testing, remove later
-var belt_id_test = 0
-
+	# (Belt removal)
+	var belt_id = factory_manager.belt_network.belt_at[FactoryManager.flatten_tile_index(tile_pos)]
+	if belt_id != BeltNetwork.EMPTY:
+		factory_manager.remove_belt(belt_id)
+		
+	# TODO machine removal unimplemented
+	
 func _input(event) -> void:
 	if Input.is_action_pressed("rotate_placement_clockwise", true):
 		rotatePlacement(MouseDirection.CLOCKWISE)
@@ -128,37 +171,21 @@ func _input(event) -> void:
 	elif Input.is_action_pressed("rotate_placement_counterclockwise", true):
 		rotatePlacement(MouseDirection.COUNTERCLOCKWISE)
 		return
-		
+			
 	if event is InputEventMouseButton:
 		handlePlacement(event)
 		return
-			
-	if event is InputEventKey:
-		if event.keycode == KEY_ESCAPE and event.pressed:
-			select_mode = false
-			preview.clear()
-			return
-		# Selects conveyor belts to place onto the map
-		if event.keycode == KEY_1 and event.pressed:
-			draggable = true
-			select_mode = true
-			source_id = 0
-			return
-			#TODO PLACEHOLDER BELOW FOR OTHER OBJECTS
-		if event.keycode == KEY_2 and event.pressed:
-			pass
-			
+	
+		# TODO REMOVE LATER TEST PURPOSES
 	if Input.is_action_pressed("test_input"):
-		#TODO REMOVE LATER TEST PURPOSES
 		if (!factory_manager.active_belts.contains(belt_id_test)):
 			return
 		if factory_manager.belt_store.item_count(belt_id_test) >= factory_manager.belt_store.MAX_ITEMS_PER_BELT - 1:
 			return
 		factory_manager.try_insert_belt_item(belt_id_test, randi_range(0, 3))
-		#print("item id = " + str(factory_manager.belt_store.item_types[factory_manager.belt_store.get_item_index(belt_id_test, 0)]));
-
-#TODO THIS IS TEMPORARY!!!!!
-#returns the alternate conveyor tile corresponding to the tile set tiles
+		
+# TODO THIS IS TEMPORARY!!!!!
+## returns the alternate conveyor tile corresponding to the tile set tiles
 func getDirectedConveyor(direction: Direction) -> ConveyorDirection:
 	match direction:
 		Direction.LEFT:
@@ -170,7 +197,7 @@ func getDirectedConveyor(direction: Direction) -> ConveyorDirection:
 		_:
 			return ConveyorDirection.DOWN_INPUT_RIGHT
 
-#draws the preview for dragging objects before placing
+## draws the preview for dragging objects before placing
 func drawPlaceObjectPreview(first_pos, second_pos):
 	if first_pos != second_pos and !pause_direction_update:
 		object_direction = getDragDirection(first_pos, second_pos)
@@ -184,7 +211,7 @@ func drawPlaceObjectPreview(first_pos, second_pos):
 		preview.set_cell(cell, source_id, selected_tile, getDirectedConveyor(object_direction))
 	editTilesOrthogonally(first_pos, second_pos, draw_logic)
 	
-#draws the preview for removing objects
+## draws the preview for removing objects
 func drawRemoveObjectPreview(first_pos, second_pos):
 	preview.clear()
 	preview.modulate = Color("ff00006f")
@@ -192,7 +219,7 @@ func drawRemoveObjectPreview(first_pos, second_pos):
 			preview.set_cell(cell, 0, Vector2i(0, 0), getDirectedConveyor(object_direction))
 	editTilesInRange(first_pos, second_pos, draw_remove_box)
 	
-#gets the current Direction that is being dragged
+## gets the current Direction that is being dragged
 func getDragDirection(first_pos: Vector2i, second_pos: Vector2i) -> Direction:
 	var dist = abs(first_pos - second_pos)
 	if dist.x > dist.y and second_pos.x > first_pos.x:
@@ -227,44 +254,61 @@ func rotatePlacement(isClockwise):
 				object_direction = Direction.RIGHT
 	pause_direction_update = true
 
-
-func handlePlacement(event):
+## handles the placement and removal of tiles on the tilemap
+func handlePlacement(event: InputEventMouseButton):
 	if !(event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT):
 		return
 	if event.pressed:
-		m_pos_before = getSnappedPosition(get_global_mouse_position())
+		deny_placement_action = false
+		pressed_mouse_pos = getSnappedPosition(get_global_mouse_position())
+		
+		# if opposite action pressed, then clear the preview and prevent the action
+		if (event.button_index == MOUSE_BUTTON_LEFT and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)) or \
+			(event.button_index == MOUSE_BUTTON_RIGHT and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)):
+			deny_placement_action = true
+			preview.clear()
 	else:
-		m_pos_after = getSnappedPosition(get_global_mouse_position())
-	
-	if event.button_index == MOUSE_BUTTON_LEFT and select_mode and !event.pressed and (placeable or draggable):
-		if (!factory_manager.is_pos_in_bounds(m_pos_before) or !factory_manager.is_pos_in_bounds(m_pos_after)):
+		released_mouse_pos = getSnappedPosition(get_global_mouse_position())
+		
+	# handle placing tiles
+	if event.button_index == MOUSE_BUTTON_LEFT and \
+							!deny_placement_action and \
+									select_mode and \
+								!event.pressed and \
+							(placeable or draggable):
+										
+		if (!factory_manager.is_pos_in_bounds(pressed_mouse_pos) or !factory_manager.is_pos_in_bounds(released_mouse_pos)):
 			print("INVALID TILE POS")
 			preview.clear()
 			return
 			
-		if not draggable or m_pos_before == m_pos_after:
+		if not draggable or pressed_mouse_pos == released_mouse_pos:
 			selected_tile = Vector2i(0, 0)
-			placeTile(m_pos_after)
+			placeTile(released_mouse_pos)
 			return
 		else:
-			placeDraggedObjects(m_pos_before, m_pos_after)
-	elif event.button_index == MOUSE_BUTTON_RIGHT and select_mode and !event.pressed:
-		if m_pos_before == m_pos_after:
+			placeDraggedObjects(pressed_mouse_pos, released_mouse_pos)
+	
+	# handle removing tiles
+	elif event.button_index == MOUSE_BUTTON_RIGHT and \
+								!deny_placement_action and \
+										select_mode and \
+										!event.pressed:
+		if pressed_mouse_pos == released_mouse_pos:
 			removeTile(preview_tile)
 			return
 		else:
-			removeDraggedObjects(m_pos_before, m_pos_after)
+			removeDraggedObjects(pressed_mouse_pos, released_mouse_pos)
 
-#calls editTilesOrthogonally with a placement function
+## calls editTilesOrthogonally with a placement function
 func placeDraggedObjects(first_pos, second_pos):
-		
 	selected_tile = Vector2i(0, 0)
 	var place_function = func place_function(cell):
 		placeTile(cell)
 	editTilesOrthogonally(first_pos, second_pos, place_function)
 	preview.clear()
 
-#calls editTilesOrthogonally with a removal function
+## calls editTilesOrthogonally with a removal function
 func removeDraggedObjects(first_pos, second_pos):
 	selected_tile = Vector2i(0, 0)
 	var remove_function = func remove_function(cell):
@@ -273,8 +317,7 @@ func removeDraggedObjects(first_pos, second_pos):
 	editTilesInRange(first_pos, second_pos, remove_function)
 	preview.clear()
 
-#calls function on every tile ORTHOGONALLY from first_pos to the direction
-#indicated by placement_direction
+## calls function on every tile ORTHOGONALLY from first_pos to the direction indicated by placement_direction
 func editTilesOrthogonally(first_pos, second_pos, function):
 	var placement_direction = getDragDirection(first_pos, second_pos)
 	if placement_direction == Direction.LEFT or placement_direction == Direction.RIGHT:
@@ -286,10 +329,36 @@ func editTilesOrthogonally(first_pos, second_pos, function):
 			var cell_location = Vector2i(first_pos.x, min(first_pos.y, second_pos.y) + i)
 			function.call(cell_location)
 			
-#calls function on every tile in the range between first_pos and second_pos
+## calls function on every tile in the range between first_pos and second_pos
 func editTilesInRange(first_pos, second_pos, function):
 	for j in range(abs(second_pos.y - first_pos.y) + 1):
 		for i in range(abs(second_pos.x - first_pos.x) + 1):
 			var cell_location = Vector2i(min(first_pos.x, second_pos.x) + i, min(first_pos.y, second_pos.y) + j)
 			function.call(cell_location)
+
+
+# selects the current building to place from hotbar
+func _on_hotbar_slot_selected(_index: int, building: BuildingDefinition) -> void:
+	if !building:
+			select_mode = false
+			selected_building = null
+			preview.clear()
+			return
+			
+	selected_building = building
+	select_mode = true
+	conveyor_held = false
+	
+	if selected_building is BeltDefinition:
+		print("BELT SELECTED")
+		draggable = true
+		conveyor_held = true
+		source_id = 0
+		return
+	else:
+		print("BUILDING SELECTED")
+		source_id = 0
+		return
+		
+		
 	

@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://g1rlk2f0gnxg" path="res://scripts/rendering/tile_placement.tscn" id="1_yqjtg"]
 [ext_resource type="Script" uid="uid://b2f25tsij3uqh" path="res://scripts/rendering/camera_controller.gd" id="2_lnu2h"]
-[ext_resource type="Script" uid="uid://dqremj44s4uon" path="res://scripts/systems/logic/game_factory_manager.gd" id="4_ir15t"]
+[ext_resource type="Script" uid="uid://dqremj44s4uon" path="res://scripts/systems/logic/factory_manager.gd" id="4_ir15t"]
 [ext_resource type="Script" uid="uid://dlftengbgphhn" path="res://scripts/definitions/factory_catalog.gd" id="5_ca42v"]
 [ext_resource type="Script" uid="uid://chb4d6bj1ky5g" path="res://scripts/definitions/items/resource_definition.gd" id="5_kvpfn"]
 [ext_resource type="Resource" uid="uid://b0d3mpbqs5i7o" path="res://data_definitions/resources/coal.tres" id="6_dinhu"]
@@ -23,8 +23,6 @@
 [node name="Game" type="Node2D" unique_id=484294181]
 
 [node name="TilePlacement" parent="." unique_id=668171513 node_paths=PackedStringArray("factory_manager") instance=ExtResource("1_yqjtg")]
-z_index = -1
-scale = Vector2(4, 4)
 factory_manager = NodePath("../FactoryManager")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=844805190]
@@ -49,4 +47,8 @@ factory_manager = NodePath("../FactoryManager")
 
 [node name="KeybindRemapUI" parent="." unique_id=2008140194 instance=ExtResource("18_264po")]
 
-[node name="FactoryBuildingUI" parent="." unique_id=979463156 instance=ExtResource("19_264po")]
+[node name="HotbarUI" type="CanvasGroup" parent="." unique_id=244117816]
+
+[node name="Hotbar" parent="HotbarUI" unique_id=484009725 instance=ExtResource("19_264po")]
+
+[connection signal="slot_selected" from="HotbarUI/Hotbar" to="TilePlacement" method="_on_hotbar_slot_selected"]

@@ -58,7 +58,6 @@ func unregister(belt_id: int, tile_index: int) -> void:
 		belt_at[tile_index] = EMPTY
 	clear_belt(belt_id)
 
-
 # Tile index in front of [param tile_index], or EMPTY at the map border.
 func neighbor_tile(tile_index: int, direction: int) -> int:
 	if direction < 0 or direction >= Direction.size():

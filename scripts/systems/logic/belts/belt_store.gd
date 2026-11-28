@@ -12,6 +12,8 @@ const MIN_ITEM_SPACING: float = 0.2
 
 # An item may leave a belt only once it has reached this position.
 const EXIT_POSITION: float = 1.0
+# A cap for item position so belts dont push item "off" if no belt can accept the item
+const MAX_STOP_POSITION: float = 0.5
 
 # Number of belt IDs the arrays are sized for.
 var capacity: int

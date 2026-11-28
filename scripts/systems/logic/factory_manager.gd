@@ -76,11 +76,11 @@ func initialize_factory() -> void:
 	initialized = true
 
 ## Converts a flattened tile index into a Vector2i of its position
-static func tileIndexToVector(tile_idx: int) -> Vector2i:
+static func tile_index_to_vector(tile_idx: int) -> Vector2i:
 	return Vector2i(tile_idx % MAP_WIDTH, int(float(tile_idx) / MAP_WIDTH))
 
 ## Converts position of a Vector2i into a flattened index
-static func flattenTileIndex(tile_pos: Vector2i) -> int:
+static func flatten_tile_index(tile_pos: Vector2i) -> int:
 	return int(tile_pos.y) * MAP_WIDTH + int(tile_pos.x)
 
 ## Returns true when tile index is within world bounds
@@ -155,7 +155,6 @@ func _reset_belt_data(belt_id: int) -> void:
 ## and updates the connections to the neighbouring belts
 ## If it succeeds, it returns the id assigned, otherwise it returns -1
 func add_belt(tile_index: int, direction: int, speed: int) -> int:
-	print(direction)
 	if not initialized:
 		return EMPTY
 	if tile_index < 0 or tile_index >= world.size:
@@ -219,7 +218,7 @@ func try_insert_belt_item(belt_id: int, resource_id: int) -> bool:
 	
 	if item_renderer != null:
 		var resource_texture: AtlasTexture = catalog.resource_resources[resource_id].icon
-		item_renderer.create_item_render(item_id, tileIndexToVector(belt_store.grid_indices[belt_id]), resource_texture)
+		item_renderer.create_item_render(item_id, tile_index_to_vector(belt_store.grid_indices[belt_id]), resource_texture)
 	
 	return true
 
@@ -252,6 +251,18 @@ func belt_item_count(belt_id: int) -> int:
 	if not _is_active_belt(belt_id):
 		return 0
 	return belt_store.item_count(belt_id)
+
+## Replaces existing belt with a new one.
+## Allows items to remain if direction is unchanged, otherwise completely replaces the belt
+func replace_existing_belt(belt_id: int, direction: Direction, speed: int):
+	if belt_store.directions[belt_id] == direction:
+		if speed < 0 or speed > INT8_MAX:
+			return
+		belt_store.speeds[belt_id] = speed
+	else:
+		var tile_index = belt_store.grid_indices[belt_id]
+		remove_belt(belt_id)
+		add_belt(tile_index, direction, speed)
 
 
 # MACHINE COMMON API
